@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>חידון חשבון מהיר</title>
+    <style>
+        /* עיצוב כללי */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 24px;
+            box-sizing: border-box;
+        }
+        
+        h1 {
+            text-align: center;
+            color: black;
+            margin-bottom: 24px;
+            font-size: 28px;
+        }
+        
+        /* חלון המשחק */
+        .game-container {
+            display: none;
+        }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        
+        .stat {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .score {
+            background-color: #c621e0;
+            color: black;
+        }
+        
+        .timer {
+            background-color: #ca40a8;
+            color: black;
+        }
+        
+        .question-container {
+            background-color: #f8fafc;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .question {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 24px;
+        }
+        
+        .answer-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        input {
+            width: 100px;
+            padding: 12px;
+            font-size: 20px;
+            text-align: center;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            direction: ltr; /* שדה הקלט תמיד משמאל לימין */
+        }
+        
+        button {
+            background-color: #a31e1e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            background-color: #d81386;
+        }
+        
+        .feedback {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .correct {
+            background-color: #dcfce7;
+            color: #ab1674;
+        }
+        
+        .incorrect {
+            background-color: #dd7cb1;
+            color: black;
+        }
+        
+        /* מסך פתיחה */
+        .start-screen {
+            text-align: center;
+        }
+        
+        .difficulty-container {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        
+        .difficulty-btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+            transform: scale(1);
+        }
+        
+        .difficulty-btn.selected {
+            transform: scale(1.1);
+            opacity: 1;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .easy {
+            background-color: #e24c9ce9;
+        }
+        
+        .medium {
+            background-color: #0bccc6;
+        }
+        
+        .hard {
+            background-color: #c30eb0;
+        }
+        
+        .start-btn {
+            background-color: #1d974ca9;
+            font-size: 20px;
+            padding: 12px 32px;
+        }
+        
+        .instructions {
+            background-color: #dbeafe;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+            text-align: right;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        
+        .instructions ul {
+            padding-right: 20px;
+            margin-bottom: 0;
+        }
+        
+        /* מסך סיכום */
+        .game-summary {
+            display: none;
+            background-color: #dbeafe;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 24px;
+        }
+        
+        .summary-title {
+            color: #4864be;
+            margin-top: 0;
+            font-size: 22px;
+            text-align: center;
+        }
+        
+        .summary-stat {
+            margin: 8px 0;
+        }
+        
+        .final-score {
+            font-size: 20px;
+            font-weight: bold;
+            margin: 16px 0;
+        }
+        
+        .play-again {
+            margin-top: 16px;
+            text-align: center;
+        }
+        
+        /* עיצוב תגובתי */
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+                margin: 0 10px;
+            }
+            
+            .difficulty-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>חידון חשבון מהיר</h1>
+        
+        <!-- מסך פתיחה -->
+        <div class="start-screen" id="startScreen">
+            <h2>בחר רמת קושי</h2>
+            <div class="difficulty-container">
+                <button class="difficulty-btn easy" onclick="setDifficulty('easy')">קל (חיבור וחיסור)</button>
+                <button class="difficulty-btn medium" onclick="setDifficulty('medium')">בינוני (כולל כפל)</button>
+                <button class="difficulty-btn hard" onclick="setDifficulty('hard')">קשה (כולל חילוק)</button>
+            </div>
+            
+            <button class="start-btn" id="startBtn" onclick="startGame()">התחל משחק</button>
+            
+            <div class="instructions">
+                <h3>איך משחקים?</h3>
+                <ul>
+                    <li>ענה על כמה שיותר שאלות חשבון תוך 30 שניות</li>
+                    <li>תקבל נקודות על כל תשובה נכונה</li>
+                    <li>תשובה מהירה תזכה אותך בבונוס נקודות</li>
+                    <li>נסה להשיג את הניקוד הגבוה ביותר!</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- מסך המשחק -->
+        <div class="game-container" id="gameContainer">
+            <div class="stats-bar">
+                <div class="stat score">ניקוד: <span id="scoreDisplay">0</span></div>
+                <div class="stat timer">זמן: <span id="timerDisplay">30</span> שניות</div>
+            </div>
+            
+            <div class="question-container">
+                <div class="question" id="questionDisplay"></div>
+                
+                <div class="answer-container">
+                    <input type="text" id="answerInput" autocomplete="off" placeholder="תשובתך">
+                    <button onclick="checkAnswer()">בדוק</button>
+                </div>
+                
+                <div id="feedbackDisplay" class="feedback" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- מסך סיכום -->
+        <div class="game-summary" id="summaryScreen">
+            <h3 class="summary-title">סיכום המשחק</h3>
+            <p class="summary-stat">שאלות נענו: <span id="totalQuestions">0</span></p>
+            <p class="summary-stat">תשובות נכונות: <span id="correctAnswers">0</span></p>
+            <p class="summary-stat">אחוז דיוק: <span id="accuracy">0</span>%</p>
+            <p class="final-score">ניקוד סופי: <span id="finalScore">0</span></p>
+            
+            <div class="play-again">
+                <button class="start-btn" onclick="resetGame()">שחק שוב</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // הגדרת רמת קושי התחלתית כשהדף נטען
+        window.onload = function() {
+            // בחירת רמת קושי התחלתית
+            setDifficulty('easy');
+        };
+        
+        // משתנים גלובליים
+        let score = 0;
+        let timeLeft = 30;
+        let gameActive = false;
+        let currentQuestion = null;
+        let timer = null;
+        let difficulty = 'easy';
+        let questionCount = 0;
+        let correctAnswers = 0;
+        let startTime = 0;
+        
+        // הגדרת רמות קושי
+        const difficultyLevels = {
+            easy: { min: 1, max: 10, operations: ['+', '-'] },
+            medium: { min: 1, max: 20, operations: ['+', '-', '*'] },
+            hard: { min: 1, max: 50, operations: ['+', '-', '*', '/'] }
+        };
+        
+        // אלמנטים
+        const startScreen = document.getElementById('startScreen');
+        const gameContainer = document.getElementById('gameContainer');
+        const summaryScreen = document.getElementById('summaryScreen');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const questionDisplay = document.getElementById('questionDisplay');
+        const answerInput = document.getElementById('answerInput');
+        const feedbackDisplay = document.getElementById('feedbackDisplay');
+        
+        // הגדרת רמת קושי
+        function setDifficulty(level) {
+            difficulty = level;
+            
+            // מעדכן את האפקט הויזואלי לבחירה
+            const buttons = document.querySelectorAll('.difficulty-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            
+            // מוסיף קלאס 'selected' לכפתור שנבחר
+            const selectedButton = document.querySelector(`.${level}`);
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+            }
+        }
+        
+        // התחלת המשחק
+        function startGame() {
+            score = 0;
+            timeLeft = 30;
+            gameActive = true;
+            questionCount = 0;
+            correctAnswers = 0;
+            
+            // מחליף את התצוגה למסך המשחק
+            startScreen.style.display = 'none';
+            gameContainer.style.display = 'block';
+            summaryScreen.style.display = 'none';
+            
+            // מעדכן תצוגות
+            scoreDisplay.textContent = score;
+            timerDisplay.textContent = timeLeft;
+            
+            // יוצר שאלה ראשונה
+            generateQuestion();
+            
+            // מתחיל טיימר
+            timer = setInterval(updateTimer, 1000);
+            
+            // מתמקד בשדה התשובה
+            answerInput.focus();
+        }
+        
+        // יצירת שאלה חדשה
+        function generateQuestion() {
+    const level = difficultyLevels[difficulty];
+    const operation = level.operations[Math.floor(Math.random() * level.operations.length)];
+
+    let num1, num2, answer, questionText;
+
+    if (operation === '+') {
+        num1 = Math.floor(Math.random() * (level.max - level.min + 1)) + level.min;
+        num2 = Math.floor(Math.random() * (level.max - level.min + 1)) + level.min;
+        answer = num1 + num2;
+        questionText = `${num1} + ${num2} = ?`;
+    } else if (operation === '-') {
+        num1 = Math.floor(Math.random() * (level.max - level.min + 1)) + level.min;
+        num2 = Math.floor(Math.random() * (level.max - level.min + 1)) + level.min;
+        answer = num1 - num2;
+        questionText = `${num1} - ${num2} = ?`;
+    } else if (operation === '*') {
+        num1 = Math.floor(Math.random() * (Math.min(level.max, 12) - level.min + 1)) + level.min;
+        num2 = Math.floor(Math.random() * (Math.min(level.max, 12) - level.min + 1)) + level.min;
+        answer = num1 * num2;
+        questionText = `${num1} × ${num2} = ?`;
+    } else if (operation === '/') {
+        num2 = Math.floor(Math.random() * 9) + 2;
+
+        if (difficulty === 'hard' && Math.random() > 0.7) {
+            num1 = Math.floor(Math.random() * (level.max / 2)) + level.min;
+            answer = parseFloat((num1 / num2).toFixed(1));
+        } else {
+            answer = Math.floor(Math.random() * 10) + 1;
+            num1 = num2 * answer;
+        }
+        questionText = `${num1} ÷ ${num2} = ?`;
+    }
+
+    currentQuestion = { num1, num2, operation, answer };
+    questionDisplay.innerHTML = `<span dir="ltr">${questionText}</span>`; // ⬅️ שורת ההצגה המעודכנת
+    answerInput.value = '';
+    feedbackDisplay.style.display = 'none';
+    startTime = Date.now();
+    answerInput.focus();
+}
+
+
+        
+        // עדכון טיימר
+        function updateTimer() {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft;
+            
+            if (timeLeft <= 0) {
+                endGame();
+            }
+        }
+        
+        // בדיקת תשובה
+        function checkAnswer() {
+            if (!gameActive) return;
+            
+            // שימוש בפונקציית parseFloat במקום parseInt כדי לטפל גם במספרים שליליים וגם עשרוניים
+            const userAnswer = parseFloat(answerInput.value);
+            
+            if (isNaN(userAnswer)) {
+                showFeedback('נא להזין מספר', false);
+                return;
+            }
+            
+            // חישוב זמן תשובה בשניות
+            const timeTaken = (Date.now() - startTime) / 1000;
+            
+            questionCount++;
+            
+            // השוואה שמטפלת כהלכה במספרים עשרוניים עם דיוק של עד 2 ספרות אחרי הנקודה
+            const isCorrect = Math.abs(userAnswer - currentQuestion.answer) < 0.01;
+            
+            if (isCorrect) {
+                // נוסחת ניקוד שמתגמלת על מהירות ודיוק
+                const speedBonus = Math.max(0, 5 - timeTaken);
+                const pointsEarned = 10 + Math.floor(speedBonus * 2);
+                
+                score += pointsEarned;
+                correctAnswers++;
+                
+                showFeedback(`נכון! קיבלת ${pointsEarned} נקודות`, true);
+                scoreDisplay.textContent = score;
+            } else {
+                showFeedback(`לא נכון. התשובה הנכונה היא ${currentQuestion.answer}`, false);
+            }
+            
+            // מעבר לשאלה הבאה אחרי 1.5 שניות
+            setTimeout(() => {
+                if (gameActive) {
+                    generateQuestion();
+                }
+            }, 1500);
+        }
+        
+        // הצגת משוב
+        function showFeedback(message, isCorrect) {
+            feedbackDisplay.textContent = message;
+            feedbackDisplay.style.display = 'block';
+            
+            if (isCorrect) {
+                feedbackDisplay.className = 'feedback correct';
+            } else {
+                feedbackDisplay.className = 'feedback incorrect';
+            }
+        }
+        
+        // סיום המשחק
+        function endGame() {
+            gameActive = false;
+            clearInterval(timer);
+            
+            // הצגת מסך סיכום
+            gameContainer.style.display = 'none';
+            summaryScreen.style.display = 'block';
+            
+            // עדכון סטטיסטיקות
+            document.getElementById('totalQuestions').textContent = questionCount;
+            document.getElementById('correctAnswers').textContent = correctAnswers;
+            
+            const accuracy = questionCount > 0 ? Math.floor((correctAnswers / questionCount) * 100) : 0;
+            document.getElementById('accuracy').textContent = accuracy;
+            
+            document.getElementById('finalScore').textContent = score;
+        }
+        
+        // איפוס המשחק
+        function resetGame() {
+            summaryScreen.style.display = 'none';
+            startScreen.style.display = 'block';
+            // שומר על בחירת רמת הקושי הנוכחית
+            const selectedButton = document.querySelector(`.${difficulty}`);
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+            }
+        }
+        
+        // טיפול במקש Enter
+        answerInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+    </script>
+</body>
+</html>
